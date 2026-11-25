@@ -22,7 +22,33 @@ make menuconfig   # Target System → Rockchip → ARMv8，选 BDY G18-PRO（可
 make -j$(nproc)
 ```
 
+本板推荐的两项构建设置（menuconfig 对应位置）：
+
+- **`Target Images → Root filesystem partition size (in MB)` = 2048**：默认 160MB 太小，装包空间只有 ~120MB；2048 让 overlay 有 ~1.9GB。
+- **取消勾选 `Target Images → ext4`**：只编 squashfs（配 overlay 分区，镜像小且支持回滚）。
+
 产物在 `bin/targets/rockchip/armv8/`，镜像名含 `bdy_g18-pro`。
+
+## 数据分区 /mnt/data（可选，一次性操作）
+
+eMMC 约 233GB，官方镜像机制只建 boot+rootfs 两个分区，剩余空间手动建第三分区：
+
+```sh
+# p2 结束于 LBA 4325375，p3 从 4325376 起占满全盘（fdisk 默认起始扇区是 2048，必须显式指定！）
+printf 'n\n\n\n4325376\n\nw\n' | fdisk /dev/mmcblk0
+mkfs.ext4 -L data /dev/mmcblk0p3
+mkdir -p /mnt/data
+uci add fstab mount
+uci set fstab.@mount[-1].target='/mnt/data'
+uci set fstab.@mount[-1].device='/dev/mmcblk0p3'
+uci set fstab.@mount[-1].fstype='ext4'
+uci set fstab.@mount[-1].enabled='1'
+uci set fstab.@mount[-1].options='rw,noatime'
+uci commit fstab
+block mount
+```
+
+之后 sysupgrade（分区表一致时逐分区写）不会碰 p3；已真机验证：226.3G 挂载于 `/mnt/data`，重启自动挂载。
 
 ## 刷写
 
