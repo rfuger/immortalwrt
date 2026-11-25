@@ -275,6 +275,13 @@ define U-Boot/9tripod-x3568-v4-rk3568
     9tripod_x3568-v4
 endef
 
+define U-Boot/bdy-g18-pro-rk3568
+  $(U-Boot/rk3568/Default)
+  NAME:=BDY G18-PRO
+  BUILD_DEVICES:= \
+    bdy_g18-pro
+endef
+
 define U-Boot/bpi-r2-pro-rk3568
   $(U-Boot/rk3568/Default)
   NAME:=Bananapi-R2 Pro
@@ -546,6 +553,7 @@ UBOOT_TARGETS := \
   radxa-zero-3-rk3566 \
   rock-3c-rk3566 \
   9tripod-x3568-v4-rk3568 \
+  bdy-g18-pro-rk3568 \
   bpi-r2-pro-rk3568 \
   easepi-r1-rk3568 \
   fastrhino-r66s-rk3568 \
