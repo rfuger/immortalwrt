@@ -7,6 +7,11 @@ rockchip_setup_interfaces()
 	local board="$1"
 
 	case "$board" in
+	bdy,g18-pro)
+		ucidef_set_interfaces_lan_wan 'eth0' 'eth1'
+		ucidef_add_switch 'switch0' \
+			'0:lan' '1:lan' '2:lan' '3:lan' '4:wan' '6u@eth0' '7u@eth1'
+		;;
 	9tripod,x3568-v4|\
 	ariaboard,photonicat|\
 	ariaboard,photonicat2|\
@@ -98,6 +103,7 @@ rockchip_setup_macs()
 	ariaboard,photonicat2|\
 	armsom,sige3|\
 	armsom,sige7|\
+	bdy,g18-pro|\
 	cyber,cyber3588-aib|\
 	ezpro,mrkaio-m68s|\
 	friendlyarm,nanopc-t6|\

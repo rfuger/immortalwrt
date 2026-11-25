@@ -131,6 +131,17 @@ define Device/cyber_cyber3588-aib
 endef
 TARGET_DEVICES += cyber_cyber3588-aib
 
+define Device/bdy_g18-pro
+  $(Device/rk3568)
+  DEVICE_VENDOR := BDY
+  DEVICE_MODEL := G18-PRO
+  DEVICE_DTS := rk3568-bdy-g18-pro
+  SUPPORTED_DEVICES := bdy,g18-pro
+  UBOOT_DEVICE_NAME := bdy-g18-pro-rk3568
+  DEVICE_PACKAGES := kmod-switch-rtl8367b swconfig wpad-openssl
+endef
+TARGET_DEVICES += bdy_g18-pro
+
 define Device/ezpro_mrkaio-m68s
   $(Device/rk3568)
   DEVICE_VENDOR := EZPRO
