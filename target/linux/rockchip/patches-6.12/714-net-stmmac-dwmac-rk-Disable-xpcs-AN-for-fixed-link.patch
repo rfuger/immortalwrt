@@ -1,0 +1,77 @@
+Subject: [PATCH] net: stmmac: dwmac-rk: disable xpcs AN for fixed-link
+
+The 710 patch always enables Clause-37 auto-negotiation in xpcs_setup(). Boards
+whose SGMII link goes to a switch (e.g. RTL8367S) describe it with a
+fixed-link node and have no AN partner, so the AN handshake never
+completes. When of_phy_is_fixed_link() is true, skip the AN register
+writes and force 1000M full-duplex in the PCS BMCR instead.
+
+diff --git a/drivers/net/ethernet/stmicro/stmmac/dwmac-rk.c b/drivers/net/ethernet/stmicro/stmmac/dwmac-rk.c
+index 2a498a2..4946f5e 100644
+--- a/drivers/net/ethernet/stmicro/stmmac/dwmac-rk.c
++++ b/drivers/net/ethernet/stmicro/stmmac/dwmac-rk.c
+@@ -12,6 +12,7 @@
+ #include <linux/clk.h>
+ #include <linux/phy.h>
+ #include <linux/phy/phy.h>
++#include <linux/of_mdio.h>
+ #include <linux/of_net.h>
+ #include <linux/module.h>
+ #include <linux/of.h>
+@@ -176,6 +177,8 @@ static int xpcs_soft_reset(struct rk_priv_data *bsp_priv, int dev)
+ static int xpcs_setup(struct rk_priv_data *bsp_priv, int mode)
+ {
+ 	int ret, i, idx = bsp_priv->id;
++	struct device_node *np = bsp_priv->pdev->dev.of_node;
++	bool is_fixed_link = of_phy_is_fixed_link(np);
+ 	u32 val;
+ 
+ 	if (mode == PHY_INTERFACE_MODE_QSGMII && idx > 0)
+@@ -187,15 +190,17 @@ static int xpcs_setup(struct rk_priv_data *bsp_priv, int mode)
+ 		return ret;
+ 	}
+ 
+-	xpcs_write(bsp_priv, SR_MII_OFFSET(0) + VR_MII_AN_INTR_STS, 0x0);
+-	xpcs_write(bsp_priv, SR_MII_OFFSET(0) + VR_MII_LINK_TIMER_CTRL, 0x1);
++	if (!is_fixed_link) {
++		xpcs_write(bsp_priv, SR_MII_OFFSET(0) + VR_MII_AN_INTR_STS, 0x0);
++		xpcs_write(bsp_priv, SR_MII_OFFSET(0) + VR_MII_LINK_TIMER_CTRL, 0x1);
+ 
+-	if (mode == PHY_INTERFACE_MODE_SGMII)
+-		xpcs_write(bsp_priv, SR_MII_OFFSET(0) + VR_MII_AN_CTRL,
+-			   VR_MII_CTRL_SGMII_AN_EN);
+-	else
+-		xpcs_write(bsp_priv, SR_MII_OFFSET(0) + VR_MII_AN_CTRL,
+-			   VR_MII_CTRL_QSGMII_AN_EN);
++		if (mode == PHY_INTERFACE_MODE_SGMII)
++			xpcs_write(bsp_priv, SR_MII_OFFSET(0) + VR_MII_AN_CTRL,
++				   VR_MII_CTRL_SGMII_AN_EN);
++		else
++			xpcs_write(bsp_priv, SR_MII_OFFSET(0) + VR_MII_AN_CTRL,
++				   VR_MII_CTRL_QSGMII_AN_EN);
++	}
+ 
+ 	if (mode == PHY_INTERFACE_MODE_QSGMII) {
+ 		for (i = 0; i < 4; i++) {
+@@ -208,11 +213,16 @@ static int xpcs_setup(struct rk_priv_data *bsp_priv, int mode)
+ 				   SR_MII_CTRL_AN_ENABLE);
+ 		}
+ 	} else {
+-		val = xpcs_read(bsp_priv, SR_MII_OFFSET(idx) + VR_MII_DIG_CTRL1);
+-		xpcs_write(bsp_priv, SR_MII_OFFSET(idx) + VR_MII_DIG_CTRL1,
+-			   val | MII_MAC_AUTO_SW);
+-		xpcs_write(bsp_priv, SR_MII_OFFSET(idx) + MII_BMCR,
+-			   SR_MII_CTRL_AN_ENABLE);
++		if (!is_fixed_link) {
++			val = xpcs_read(bsp_priv, SR_MII_OFFSET(idx) + VR_MII_DIG_CTRL1);
++			xpcs_write(bsp_priv, SR_MII_OFFSET(idx) + VR_MII_DIG_CTRL1,
++				   val | MII_MAC_AUTO_SW);
++			xpcs_write(bsp_priv, SR_MII_OFFSET(idx) + MII_BMCR,
++				   SR_MII_CTRL_AN_ENABLE);
++		} else {
++			xpcs_write(bsp_priv, SR_MII_OFFSET(idx) + MII_BMCR,
++				   BMCR_FULLDPLX | BMCR_SPEED1000);
++		}
+ 	}
+ 
+ 	return ret;
