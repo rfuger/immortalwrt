@@ -15,7 +15,7 @@
 ## 编译
 
 ```bash
-git clone -b bdy-g18-pro-25.12.2 https://github.com/rfuger/immortalwrt
+git clone -b bdy-g18-pro https://github.com/rfuger/immortalwrt
 cd immortalwrt
 ./scripts/feeds update -a && ./scripts/feeds install -a
 make menuconfig   # Target System → Rockchip → ARMv8，选 BDY G18-PRO（可同时选 Firefly ROC-RK3568-PC）
@@ -48,7 +48,7 @@ make -j$(nproc)
 
 ```bash
 git fetch origin
-git rebase --onto v<新版本> v25.12.2 bdy-g18-pro-25.12.2
+git rebase --onto v<新版本> <上一个基座tag> bdy-g18-pro
 ```
 
 冲突点通常只有三处：713（内核 Makefile 行号漂移）、714（官方 710 变化）、rtl8367b.c（上游驱动更新）。DTS、uboot 板级、mk/base-files 均为独立文件，自动带过。
