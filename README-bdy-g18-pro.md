@@ -46,6 +46,8 @@ make -j$(nproc)
 
 ## 跟随官方升级
 
+详见 [UPGRADE-bdy-g18-pro.md](UPGRADE-bdy-g18-pro.md)（完整步骤、冲突处理、验证检查单）。速记：
+
 ```bash
 git fetch origin
 git rebase --onto v<新版本> <上一个基座tag> bdy-g18-pro
